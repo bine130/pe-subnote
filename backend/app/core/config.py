@@ -7,9 +7,11 @@ class Settings(BaseSettings):
 
     @property
     def database_url(self) -> str:
-        """DATABASE_URL을 asyncpg 형식으로 변환"""
-        if self.DATABASE_URL.startswith("postgresql://"):
-            return self.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
+        """DATABASE_URL을 psycopg2가 사용할 수 있게 반환"""
+        # postgres:// -> postgresql:// 변환 (Render가 postgres://로 제공하는 경우)
+        if self.DATABASE_URL.startswith("postgres://"):
+            return self.DATABASE_URL.replace("postgres://", "postgresql://", 1)
+        # 이미 postgresql://이면 그대로 반환 (psycopg2가 사용)
         return self.DATABASE_URL
 
     # Supabase (Optional)
