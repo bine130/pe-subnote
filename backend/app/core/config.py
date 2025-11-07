@@ -1,6 +1,5 @@
 from pydantic_settings import BaseSettings
-from typing import List, Optional
-from pydantic import field_validator
+from typing import Optional
 
 class Settings(BaseSettings):
     # Database
@@ -21,15 +20,13 @@ class Settings(BaseSettings):
     APPLE_CLIENT_ID: str = ""
     APPLE_CLIENT_SECRET: str = ""
 
-    # CORS
-    ALLOWED_ORIGINS: List[str] = ["http://localhost:5173", "http://localhost:5174"]
+    # CORS - 문자열로 받아서 나중에 split
+    ALLOWED_ORIGINS: str = "http://localhost:5173,http://localhost:5174"
 
-    @field_validator('ALLOWED_ORIGINS', mode='before')
-    @classmethod
-    def parse_cors_origins(cls, v):
-        if isinstance(v, str):
-            return [origin.strip() for origin in v.split(',')]
-        return v
+    @property
+    def cors_origins(self) -> list[str]:
+        """CORS origins를 리스트로 반환"""
+        return [origin.strip() for origin in self.ALLOWED_ORIGINS.split(',')]
 
     class Config:
         env_file = ".env"
