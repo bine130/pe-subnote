@@ -7,7 +7,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = useAuthStore((state) => state.token)
 
   if (!token) {
-    return <Navigate to="/login" replace />
+    return <Navigate to="/login" />
   }
 
   return <>{children}</>
@@ -26,7 +26,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>
   )

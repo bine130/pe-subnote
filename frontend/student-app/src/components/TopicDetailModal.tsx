@@ -57,12 +57,39 @@ function StickyNote({ note, onUpdate, onDelete }: StickyNoteProps) {
     })
   }
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if ((e.target as HTMLElement).tagName === 'TEXTAREA' ||
+        (e.target as HTMLElement).tagName === 'BUTTON' ||
+        (e.target as HTMLElement).tagName === 'INPUT' ||
+        (e.target as HTMLElement).classList.contains('resize-handle')) {
+      return
+    }
+    const touch = e.touches[0]
+    setIsDragging(true)
+    setDragStart({
+      x: touch.clientX - position.x,
+      y: touch.clientY - position.y,
+    })
+  }
+
   const handleResizeMouseDown = (e: React.MouseEvent) => {
     e.stopPropagation()
     setIsResizing(true)
     setResizeStart({
       x: e.clientX,
       y: e.clientY,
+      width: size.width,
+      height: size.height,
+    })
+  }
+
+  const handleResizeTouchStart = (e: React.TouchEvent) => {
+    e.stopPropagation()
+    const touch = e.touches[0]
+    setIsResizing(true)
+    setResizeStart({
+      x: touch.clientX,
+      y: touch.clientY,
       width: size.width,
       height: size.height,
     })
@@ -77,6 +104,22 @@ function StickyNote({ note, onUpdate, onDelete }: StickyNoteProps) {
       } else if (isResizing) {
         const deltaX = e.clientX - resizeStart.x
         const deltaY = e.clientY - resizeStart.y
+        const newWidth = Math.max(150, resizeStart.width + deltaX)
+        const newHeight = Math.max(150, resizeStart.height + deltaY)
+        setSize({ width: newWidth, height: newHeight })
+      }
+    }
+
+    const handleTouchMove = (e: TouchEvent) => {
+      e.preventDefault() // 스크롤 방지
+      const touch = e.touches[0]
+      if (isDragging) {
+        const newX = touch.clientX - dragStart.x
+        const newY = touch.clientY - dragStart.y
+        setPosition({ x: newX, y: newY })
+      } else if (isResizing) {
+        const deltaX = touch.clientX - resizeStart.x
+        const deltaY = touch.clientY - resizeStart.y
         const newWidth = Math.max(150, resizeStart.width + deltaX)
         const newHeight = Math.max(150, resizeStart.height + deltaY)
         setSize({ width: newWidth, height: newHeight })
@@ -99,12 +142,32 @@ function StickyNote({ note, onUpdate, onDelete }: StickyNoteProps) {
       }
     }
 
+    const handleTouchEnd = () => {
+      if (isDragging) {
+        setIsDragging(false)
+        // 위치가 변경되었으면 저장
+        if (position.x !== note.position_x || position.y !== note.position_y) {
+          onUpdate(note.id, { position_x: position.x, position_y: position.y })
+        }
+      } else if (isResizing) {
+        setIsResizing(false)
+        // 크기가 변경되었으면 저장
+        if (size.width !== note.width || size.height !== note.height) {
+          onUpdate(note.id, { width: size.width, height: size.height })
+        }
+      }
+    }
+
     if (isDragging || isResizing) {
       window.addEventListener('mousemove', handleMouseMove)
       window.addEventListener('mouseup', handleMouseUp)
+      window.addEventListener('touchmove', handleTouchMove, { passive: false })
+      window.addEventListener('touchend', handleTouchEnd)
       return () => {
         window.removeEventListener('mousemove', handleMouseMove)
         window.removeEventListener('mouseup', handleMouseUp)
+        window.removeEventListener('touchmove', handleTouchMove)
+        window.removeEventListener('touchend', handleTouchEnd)
       }
     }
   }, [isDragging, isResizing, position, size, dragStart, resizeStart, note.id, note.position_x, note.position_y, note.width, note.height, onUpdate])
@@ -138,6 +201,7 @@ function StickyNote({ note, onUpdate, onDelete }: StickyNoteProps) {
         opacity: note.opacity ?? 1.0,
       }}
       onMouseDown={handleMouseDown}
+      onTouchStart={handleTouchStart}
     >
       <div className="p-3 h-full flex flex-col">
         {/* Header */}
@@ -220,8 +284,9 @@ function StickyNote({ note, onUpdate, onDelete }: StickyNoteProps) {
 
       {/* Resize Handle */}
       <div
-        className="resize-handle absolute bottom-0 right-0 w-4 h-4 cursor-se-resize bg-gray-400 opacity-50 hover:opacity-100 transition-opacity"
+        className="resize-handle absolute bottom-0 right-0 w-6 h-6 md:w-4 md:h-4 cursor-se-resize bg-gray-400 opacity-50 hover:opacity-100 transition-opacity touch-none"
         onMouseDown={handleResizeMouseDown}
+        onTouchStart={handleResizeTouchStart}
         style={{
           clipPath: 'polygon(100% 0, 100% 100%, 0 100%)',
         }}

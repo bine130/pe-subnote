@@ -97,6 +97,11 @@ export default function TopicsPage() {
     loadTopics(true, 0)
     loadBookmarks()
     loadCategories()
+
+    // 초기 히스토리 상태 설정
+    if (!window.history.state?.appState) {
+      window.history.replaceState({ appState: 'main' }, '')
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -156,6 +161,51 @@ export default function TopicsPage() {
     }
   }, [showCategoryTree, showImportanceDropdown])
 
+  // 뒤로가기 버튼 처리
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      const state = event.state
+
+      // 모달이 열려있으면 닫기
+      if (selectedTopicId !== null) {
+        setSelectedTopicId(null)
+        setSelectedTopicRect(null)
+        loadBookmarks()
+        return
+      }
+
+      // 검색어가 있으면 초기화
+      if (searchQuery) {
+        setSearchQuery('')
+        setPage(0)
+        loadTopics(false, 0, '')
+        return
+      }
+
+      // 필터가 활성화되어 있으면 초기화
+      if (selectedCategoryId !== null) {
+        setSelectedCategoryId(null)
+        return
+      }
+
+      if (selectedImportance !== null) {
+        setSelectedImportance(null)
+        return
+      }
+
+      if (showBookmarkedOnly) {
+        setShowBookmarkedOnly(false)
+        return
+      }
+    }
+
+    window.addEventListener('popstate', handlePopState)
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState)
+    }
+  }, [selectedTopicId, searchQuery, selectedCategoryId, selectedImportance, showBookmarkedOnly, loadTopics])
+
   const filteredTopics = topics
     .filter(topic => {
       // 북마크 필터
@@ -169,6 +219,11 @@ export default function TopicsPage() {
     e.preventDefault()
     setPage(0)
     loadTopics(false, 0)
+
+    // 히스토리에 검색 상태 추가
+    if (searchQuery) {
+      window.history.pushState({ appState: 'search', query: searchQuery }, '')
+    }
   }
 
   const handleTopicClick = (topicId: number, event: React.MouseEvent<HTMLDivElement>) => {
@@ -176,6 +231,9 @@ export default function TopicsPage() {
     const rect = card.getBoundingClientRect()
     setSelectedTopicRect(rect)
     setSelectedTopicId(topicId)
+
+    // 히스토리에 모달 상태 추가
+    window.history.pushState({ appState: 'modal', topicId }, '')
   }
 
   const handleCloseDetail = () => {
@@ -189,11 +247,19 @@ export default function TopicsPage() {
     setPage(0)
     setHasMore(true)
     loadTopics(false, 0, keyword)
+
+    // 히스토리에 키워드 검색 상태 추가
+    window.history.pushState({ appState: 'search', query: keyword }, '')
   }
 
   const handleCategorySelect = (categoryId: number | null) => {
     setSelectedCategoryId(categoryId)
     setShowCategoryTree(false)
+
+    // 히스토리에 카테고리 필터 상태 추가
+    if (categoryId !== null) {
+      window.history.pushState({ appState: 'filter', type: 'category', categoryId }, '')
+    }
   }
 
   const getCategoryName = (categoryId: number | null): string => {
@@ -451,6 +517,8 @@ export default function TopicsPage() {
                       onClick={() => {
                         setSelectedImportance(level)
                         setShowImportanceDropdown(false)
+                        // 히스토리에 중요도 필터 상태 추가
+                        window.history.pushState({ appState: 'filter', type: 'importance', level }, '')
                       }}
                       className={`w-full flex justify-center py-2 px-3 rounded-lg transition-colors mb-1 ${
                         selectedImportance === level
@@ -483,7 +551,14 @@ export default function TopicsPage() {
             </div>
 
             <button
-              onClick={() => setShowBookmarkedOnly(!showBookmarkedOnly)}
+              onClick={() => {
+                const newValue = !showBookmarkedOnly
+                setShowBookmarkedOnly(newValue)
+                // 히스토리에 북마크 필터 상태 추가
+                if (newValue) {
+                  window.history.pushState({ appState: 'filter', type: 'bookmark' }, '')
+                }
+              }}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 showBookmarkedOnly
                   ? 'bg-red-100 text-red-700'
