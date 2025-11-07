@@ -9,10 +9,6 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'icon/apple-touch-icon.png'],
-      devOptions: {
-        enabled: true,
-        type: 'module'
-      },
       manifest: {
         name: 'PE Subnote - 기술사 서브노트',
         short_name: 'PE Subnote',
