@@ -49,6 +49,19 @@ async def oauth_login(
             headers={"X-Registration-Required": "true"}
         )
 
+    # 승인 상태 확인
+    if user.approval_status == "pending":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your account is pending approval. Please wait for administrator approval."
+        )
+
+    if user.approval_status == "rejected":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your account has been rejected. Please contact the administrator."
+        )
+
     # JWT 토큰 생성
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(

@@ -14,12 +14,15 @@ app = FastAPI(
 )
 
 # CORS origins 로깅
-logger.info(f"CORS Origins: {settings.cors_origins}")
+cors_origins_list = settings.cors_origins
+logger.info(f"CORS Origins: {cors_origins_list}")
+logger.info(f"CORS Origins type: {type(cors_origins_list)}")
+logger.info(f"CORS Origins items: {[repr(o) for o in cors_origins_list]}")
 
 # CORS 설정
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
+    allow_origins=cors_origins_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
