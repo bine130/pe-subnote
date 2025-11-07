@@ -1,12 +1,20 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
+import logging
+
+# 로깅 설정
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="PE Subnote API",
     description="기술사 서브노트 관리 시스템 API",
     version="1.0.0"
 )
+
+# CORS origins 로깅
+logger.info(f"CORS Origins: {settings.cors_origins}")
 
 # CORS 설정
 app.add_middleware(
