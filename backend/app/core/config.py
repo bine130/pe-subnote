@@ -1,13 +1,14 @@
 from pydantic_settings import BaseSettings
-from typing import List
+from typing import List, Optional
+from pydantic import field_validator
 
 class Settings(BaseSettings):
     # Database
     DATABASE_URL: str
 
-    # Supabase
-    SUPABASE_URL: str
-    SUPABASE_KEY: str
+    # Supabase (Optional)
+    SUPABASE_URL: Optional[str] = None
+    SUPABASE_KEY: Optional[str] = None
 
     # Security
     SECRET_KEY: str
@@ -22,6 +23,13 @@ class Settings(BaseSettings):
 
     # CORS
     ALLOWED_ORIGINS: List[str] = ["http://localhost:5173", "http://localhost:5174"]
+
+    @field_validator('ALLOWED_ORIGINS', mode='before')
+    @classmethod
+    def parse_cors_origins(cls, v):
+        if isinstance(v, str):
+            return [origin.strip() for origin in v.split(',')]
+        return v
 
     class Config:
         env_file = ".env"
