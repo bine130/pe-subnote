@@ -45,7 +45,7 @@ export default function LoginPage() {
 
       // 로그인 성공
       setAuth(tokenResponse.access_token, user)
-      navigate('/')
+      navigate('/', { replace: true })
     } catch (err: any) {
       if (err.message.includes('not found')) {
         // 회원가입 필요

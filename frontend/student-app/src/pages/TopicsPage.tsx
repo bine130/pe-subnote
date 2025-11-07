@@ -30,6 +30,8 @@ export default function TopicsPage() {
   const [selectedImportance, setSelectedImportance] = useState<number | null>(null)
   const [showImportanceDropdown, setShowImportanceDropdown] = useState(false)
   const importanceDropdownRef = useRef<HTMLDivElement>(null)
+  const [showExitToast, setShowExitToast] = useState(false)
+  const backPressTimeRef = useRef<number>(0)
 
   const loadTopics = useCallback(async (isInitial = false, pageNum = 0, searchOverride?: string) => {
     if (isLoadingRef.current) return
@@ -194,6 +196,23 @@ export default function TopicsPage() {
       if (showBookmarkedOnly) {
         setShowBookmarkedOnly(false)
         return
+      }
+
+      // 메인 페이지에서 뒤로가기: 두 번 누르면 종료
+      const currentTime = Date.now()
+      if (currentTime - backPressTimeRef.current < 2000) {
+        // 2초 이내 다시 누름 - 종료 시도
+        window.close()
+        // PWA에서는 window.close()가 안 되므로, 사용자에게 직접 닫으라고 안내
+        return
+      } else {
+        // 첫 번째 뒤로가기
+        backPressTimeRef.current = currentTime
+        setShowExitToast(true)
+        // 히스토리에 다시 추가 (뒤로가기 막기)
+        window.history.pushState({ appState: 'main' }, '')
+        // 2초 후 토스트 숨기기
+        setTimeout(() => setShowExitToast(false), 2000)
       }
     }
 
@@ -777,6 +796,17 @@ export default function TopicsPage() {
           onToggleDarkMode={() => setIsDarkMode(!isDarkMode)}
           onKeywordClick={handleKeywordClick}
         />
+      )}
+
+      {/* Exit Toast */}
+      {showExitToast && (
+        <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-50 animate-fade-in">
+          <div className={`px-6 py-3 rounded-lg shadow-lg ${
+            isDarkMode ? 'bg-gray-800 text-gray-100' : 'bg-gray-900 text-white'
+          }`}>
+            <p className="text-sm font-medium">한 번 더 누르면 종료됩니다</p>
+          </div>
+        </div>
       )}
     </div>
   )
