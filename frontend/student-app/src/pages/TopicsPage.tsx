@@ -163,9 +163,7 @@ export default function TopicsPage() {
 
   // 뒤로가기 버튼 처리
   useEffect(() => {
-    const handlePopState = (event: PopStateEvent) => {
-      const state = event.state
-
+    const handlePopState = () => {
       // 모달이 열려있으면 닫기
       if (selectedTopicId !== null) {
         setSelectedTopicId(null)
