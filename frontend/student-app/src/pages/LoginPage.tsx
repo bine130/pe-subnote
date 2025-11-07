@@ -11,14 +11,16 @@ export default function LoginPage() {
   const setAuth = useAuthStore((state) => state.setAuth)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showRegister, setShowRegister] = useState(false)
+  const [registerData, setRegisterData] = useState({ name: '', cohort: '', idToken: '' })
 
   const handleGoogleSuccess = async (credentialResponse: any) => {
     setLoading(true)
     setError('')
 
-    try {
-      const idToken = credentialResponse.credential
+    const idToken = credentialResponse.credential
 
+    try {
       // 로그인 시도
       const tokenResponse = await authApi.login({
         provider: 'google',
@@ -46,10 +48,40 @@ export default function LoginPage() {
       navigate('/')
     } catch (err: any) {
       if (err.message.includes('not found')) {
-        setError('Account not found. Please sign up first or contact administrator.')
+        // 회원가입 필요
+        setShowRegister(true)
+        setRegisterData({ ...registerData, idToken: idToken })
+        setError('')
+      } else if (err.message.includes('pending approval')) {
+        setError('Your account is pending approval. Please wait for administrator approval.')
+      } else if (err.message.includes('rejected')) {
+        setError('Your account has been rejected. Please contact administrator.')
       } else {
         setError(err.message || 'Authentication failed')
       }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+
+    try {
+      await authApi.register({
+        provider: 'google',
+        id_token: registerData.idToken,
+        name: registerData.name,
+        cohort: parseInt(registerData.cohort),
+      })
+
+      // 회원가입 성공 - 승인 대기 메시지
+      setError('Registration successful! Your account is pending approval. Please wait for administrator to approve your account.')
+      setShowRegister(false)
+    } catch (err: any) {
+      setError(err.message || 'Registration failed')
     } finally {
       setLoading(false)
     }
@@ -87,28 +119,85 @@ export default function LoginPage() {
           )}
 
           <div className="space-y-4">
-            <div className="flex justify-center">
-              <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={() => setError('Google login failed')}
-                theme="outline"
-                size="large"
-                text="signin_with"
-                shape="rectangular"
-                width="280"
-              />
-            </div>
+            {!showRegister ? (
+              <>
+                <div className="flex justify-center">
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={() => setError('Google login failed')}
+                    theme="outline"
+                    size="large"
+                    text="signin_with"
+                    shape="rectangular"
+                    width="280"
+                  />
+                </div>
 
-            <div className="flex justify-center opacity-50 cursor-not-allowed" title="Apple 로그인 준비 중">
-              <div className="flex items-center w-[280px] h-[44px] pl-[14px] bg-white text-gray-700 rounded border border-gray-300 font-medium text-sm">
-                <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
-                </svg>
-                <span className="ml-[46px]">Apple 계정으로 로그인</span>
-              </div>
-            </div>
+                <div className="flex justify-center opacity-50 cursor-not-allowed" title="Apple 로그인 준비 중">
+                  <div className="flex items-center w-[280px] h-[44px] pl-[14px] bg-white text-gray-700 rounded border border-gray-300 font-medium text-sm">
+                    <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+                    </svg>
+                    <span className="ml-[46px]">Apple 계정으로 로그인</span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <form onSubmit={handleRegister} className="space-y-4">
+                <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r mb-4">
+                  <p className="text-sm text-blue-700">
+                    회원가입이 필요합니다. 정보를 입력해주세요.
+                  </p>
+                </div>
 
-            {loading && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    이름
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={registerData.name}
+                    onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    placeholder="홍길동"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    기수
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    value={registerData.cohort}
+                    onChange={(e) => setRegisterData({ ...registerData, cohort: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    placeholder="1"
+                  />
+                </div>
+
+                <div className="flex space-x-3">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="flex-1 bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition disabled:opacity-50"
+                  >
+                    {loading ? '처리 중...' : '회원가입'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowRegister(false)}
+                    className="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-300 transition"
+                  >
+                    취소
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {loading && !showRegister && (
               <div className="text-center">
                 <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>
                 <p className="text-sm text-gray-500 mt-2">로그인 중...</p>
