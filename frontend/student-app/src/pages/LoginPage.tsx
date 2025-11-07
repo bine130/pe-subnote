@@ -210,6 +210,11 @@ export default function LoginPage() {
               승인된 계정만 이용 가능합니다. <br />
               문의사항은 관리자에게 연락해주세요.
             </p>
+            <p className="text-xs text-gray-400 mt-6">
+              <br />
+              <br />
+              Developed by Dave Lee, PE
+            </p>
           </div>
         </div>
       </div>
