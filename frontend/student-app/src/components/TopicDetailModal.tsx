@@ -449,7 +449,7 @@ export default function TopicDetailModal({
   onClose,
   cardRect,
   isDarkMode = false,
-  onToggleDarkMode,
+  onToggleDarkMode: _onToggleDarkMode,
   onKeywordClick
 }: TopicDetailModalProps) {
   const { token, user } = useAuthStore()
@@ -470,7 +470,7 @@ export default function TopicDetailModal({
 
   // Notes (Sticky Notes) state
   const [notes, setNotes] = useState<Note[]>([])
-  const [notesLoading, setNotesLoading] = useState(false)
+  const [_notesLoading, setNotesLoading] = useState(false)
   const [showNotes, setShowNotes] = useState(false)
 
   // 애니메이션 시작
