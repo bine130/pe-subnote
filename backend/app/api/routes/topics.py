@@ -15,13 +15,19 @@ router = APIRouter()
 async def get_topics(
     category_id: Optional[int] = Query(None),
     is_published: Optional[bool] = Query(None),
+    search: Optional[str] = Query(None),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
     db: Session = Depends(get_db)
 ):
     """
-    서브노트 목록 조회 (필터링 지원)
+    서브노트 목록 조회 (필터링 및 검색 지원)
+
+    - search: 제목 또는 키워드로 검색
     """
+    from app.models.comment import Comment
+    from sqlalchemy import func as sql_func
+
     query = db.query(Topic)
 
     if category_id is not None:
@@ -30,8 +36,40 @@ async def get_topics(
     if is_published is not None:
         query = query.filter(Topic.is_published == is_published)
 
+    # 검색 (제목 또는 키워드)
+    if search:
+        search_filter = f"%{search}%"
+        query = query.filter(
+            (Topic.title.ilike(search_filter)) |
+            (Topic.keywords.ilike(search_filter))
+        )
+
     topics = query.order_by(Topic.order_index, Topic.created_at.desc()).offset(skip).limit(limit).all()
-    return topics
+
+    # 댓글 수 추가
+    result = []
+    for topic in topics:
+        comments_count = db.query(sql_func.count(Comment.id)).filter(
+            Comment.topic_id == topic.id
+        ).scalar()
+
+        topic_dict = {
+            "id": topic.id,
+            "title": topic.title,
+            "category_id": topic.category_id,
+            "category": topic.category,
+            "is_published": topic.is_published,
+            "view_count": topic.view_count,
+            "importance_level": topic.importance_level,
+            "keywords": topic.keywords,
+            "mnemonic": topic.mnemonic,
+            "comments_count": comments_count or 0,
+            "created_at": topic.created_at,
+            "updated_at": topic.updated_at,
+        }
+        result.append(topic_dict)
+
+    return result
 
 
 @router.get("/{topic_id}", response_model=TopicResponse)

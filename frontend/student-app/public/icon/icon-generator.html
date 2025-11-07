@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PWA Icon Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: #f0f0f0;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        canvas {
+            border: 2px solid #ddd;
+            margin: 20px 0;
+            border-radius: 10px;
+        }
+        button {
+            background: #6366f1;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #4f46e5;
+        }
+        .preview {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .preview-item {
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📚 PE Subnote PWA 아이콘 생성기</h1>
+        <p>아래 버튼을 클릭하여 각 크기의 아이콘을 다운로드하세요</p>
+
+        <div class="preview" id="preview"></div>
+
+        <div>
+            <button onclick="downloadIcon(192)">192x192 다운로드</button>
+            <button onclick="downloadIcon(512)">512x512 다운로드</button>
+            <button onclick="downloadIcon(180, 'apple-touch-icon')">180x180 (Apple) 다운로드</button>
+        </div>
+    </div>
+
+    <script>
+        function createIcon(size) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+
+            // 배경 그라디언트 (indigo to purple)
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#4f46e5'); // indigo-600
+            gradient.addColorStop(1, '#7c3aed'); // purple-600
+            ctx.fillStyle = gradient;
+
+            // 둥근 모서리 사각형
+            const radius = size * 0.15;
+            ctx.beginPath();
+            ctx.moveTo(radius, 0);
+            ctx.lineTo(size - radius, 0);
+            ctx.quadraticCurveTo(size, 0, size, radius);
+            ctx.lineTo(size, size - radius);
+            ctx.quadraticCurveTo(size, size, size - radius, size);
+            ctx.lineTo(radius, size);
+            ctx.quadraticCurveTo(0, size, 0, size - radius);
+            ctx.lineTo(0, radius);
+            ctx.quadraticCurveTo(0, 0, radius, 0);
+            ctx.closePath();
+            ctx.fill();
+
+            // SVG를 이미지로 변환해서 그리기
+            const svgString = `
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                </svg>
+            `;
+
+            const svgBlob = new Blob([svgString], {type: 'image/svg+xml;charset=utf-8'});
+            const url = URL.createObjectURL(svgBlob);
+            const img = new Image();
+
+            return new Promise((resolve) => {
+                img.onload = function() {
+                    const iconSize = size * 0.5;
+                    const x = (size - iconSize) / 2;
+                    const y = (size - iconSize) / 2;
+                    ctx.drawImage(img, x, y, iconSize, iconSize);
+                    URL.revokeObjectURL(url);
+                    resolve(canvas);
+                };
+                img.src = url;
+            });
+        }
+
+        async function displayPreviews() {
+            const preview = document.getElementById('preview');
+            for (const size of [192, 512, 180]) {
+                const canvas = await createIcon(size);
+                canvas.style.width = '120px';
+                canvas.style.height = '120px';
+
+                const div = document.createElement('div');
+                div.className = 'preview-item';
+                div.appendChild(canvas);
+
+                const label = document.createElement('p');
+                label.textContent = `${size}x${size}px`;
+                label.style.marginTop = '10px';
+                label.style.fontSize = '14px';
+                div.appendChild(label);
+
+                preview.appendChild(div);
+            }
+        }
+
+        async function downloadIcon(size, name) {
+            const canvas = await createIcon(size);
+            const link = document.createElement('a');
+            const filename = name || `icon-${size}x${size}`;
+            link.download = `${filename}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        // 페이지 로드 시 미리보기 생성
+        displayPreviews();
+    </script>
+</body>
+</html>

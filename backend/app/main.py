@@ -26,7 +26,7 @@ async def health_check():
     return {"status": "healthy"}
 
 # Import routers
-from app.api.routes import auth, users, categories, topics, templates
+from app.api.routes import auth, users, categories, topics, templates, comments, bookmarks, read_counts, notes
 
 # Include routers
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
@@ -34,6 +34,7 @@ app.include_router(users.router, prefix="/api/users", tags=["users"])
 app.include_router(categories.router, prefix="/api/categories", tags=["categories"])
 app.include_router(topics.router, prefix="/api/topics", tags=["topics"])
 app.include_router(templates.router, prefix="/api/templates", tags=["templates"])
-
-# TODO: Add more routers
-# app.include_router(versions.router, prefix="/api/versions", tags=["versions"])
+app.include_router(comments.router, tags=["comments"])  # prefix already in router
+app.include_router(bookmarks.router, tags=["bookmarks"])  # prefix already in router
+app.include_router(read_counts.router, tags=["read-counts"])  # prefix already in router
+app.include_router(notes.router, tags=["notes"])  # prefix already in router

@@ -24,8 +24,11 @@ export default function TopicEditorPage() {
   const [formData, setFormData] = useState({
     title: '',
     content: '',
+    keywords: '',
+    mnemonic: '',
     category_id: undefined as number | undefined,
     is_published: true,
+    importance_level: 3,
   })
 
   const isEditMode = !!id
@@ -72,9 +75,18 @@ export default function TopicEditorPage() {
       setFormData({
         title: topic.title,
         content: topic.content,
+        keywords: topic.keywords || '',
+        mnemonic: topic.mnemonic || '',
         category_id: topic.category_id,
         is_published: topic.is_published,
+        importance_level: topic.importance_level || 3,
       })
+
+      // 에디터가 준비되면 content 설정
+      if (editorRef.current) {
+        editorRef.current.getInstance().setMarkdown(topic.content)
+        setContentLoaded(true)
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to load topic')
     } finally {
@@ -85,10 +97,16 @@ export default function TopicEditorPage() {
   useEffect(() => {
     loadCategories()
     loadTemplates()
-    if (isEditMode) {
+  }, [token])
+
+  useEffect(() => {
+    if (isEditMode && token && id) {
       loadTopic()
     }
-  }, [token, id])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id])
+
+  const [contentLoaded, setContentLoaded] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -105,16 +123,22 @@ export default function TopicEditorPage() {
         const updateData: TopicUpdate = {
           title: formData.title,
           content: content,
+          keywords: formData.keywords || undefined,
+          mnemonic: formData.mnemonic || undefined,
           category_id: formData.category_id,
           is_published: formData.is_published,
+          importance_level: formData.importance_level,
         }
         await topicsApi.update(token, parseInt(id!), updateData)
       } else {
         const createData: TopicCreate = {
           title: formData.title,
           content: content,
+          keywords: formData.keywords || undefined,
+          mnemonic: formData.mnemonic || undefined,
           category_id: formData.category_id,
           is_published: formData.is_published,
+          importance_level: formData.importance_level,
         }
         await topicsApi.create(token, createData)
       }
@@ -179,42 +203,103 @@ export default function TopicEditorPage() {
             />
           </div>
 
+          {/* Keywords */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              키워드
+            </label>
+            <input
+              type="text"
+              value={formData.keywords}
+              onChange={(e) => setFormData({ ...formData, keywords: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              placeholder="쉼표로 구분하여 키워드를 입력하세요 (예: 민법, 물권, 소유권)"
+              maxLength={500}
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              검색 및 분류에 활용될 키워드를 입력하세요
+            </p>
+          </div>
+
+          {/* Mnemonic */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              암기두음법
+            </label>
+            <textarea
+              value={formData.mnemonic}
+              onChange={(e) => setFormData({ ...formData, mnemonic: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              placeholder="암기에 도움이 되는 두음법이나 요령을 입력하세요"
+              rows={3}
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              암기를 위한 연상법, 두음법 등을 입력하세요
+            </p>
+          </div>
+
           {/* Template Selector (only for new topics) */}
           {!isEditMode && templates.length > 0 && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 템플릿 불러오기
               </label>
-              <div className="flex gap-2">
-                <select
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      handleApplyTemplate(parseInt(e.target.value))
-                    }
-                  }}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                >
-                  <option value="">템플릿 선택...</option>
-                  {templates.map(template => (
-                    <option key={template.id} value={template.id}>
-                      {template.name}
-                      {template.description && ` - ${template.description}`}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  onClick={() => navigate('/templates')}
-                  className="px-4 py-2 text-sm border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-                >
-                  템플릿 관리
-                </button>
-              </div>
+              <select
+                onChange={(e) => {
+                  if (e.target.value) {
+                    handleApplyTemplate(parseInt(e.target.value))
+                  }
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              >
+                <option value="">템플릿 선택...</option>
+                {templates.map(template => (
+                  <option key={template.id} value={template.id}>
+                    {template.name}
+                    {template.description && ` - ${template.description}`}
+                  </option>
+                ))}
+              </select>
               <p className="mt-1 text-xs text-gray-500">
                 템플릿을 선택하면 에디터에 내용이 자동으로 삽입됩니다
               </p>
             </div>
           )}
+
+          {/* Importance Level */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              중요도 *
+            </label>
+            <div className="flex items-center gap-2">
+              {[1, 2, 3, 4, 5].map((level) => (
+                <button
+                  key={level}
+                  type="button"
+                  onClick={() => setFormData({ ...formData, importance_level: level })}
+                  className="focus:outline-none"
+                >
+                  <svg
+                    className={`w-8 h-8 transition-colors ${
+                      level <= formData.importance_level
+                        ? 'text-yellow-400 hover:text-yellow-500'
+                        : 'text-gray-300 hover:text-gray-400'
+                    }`}
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                </button>
+              ))}
+              <span className="ml-2 text-sm text-gray-600">
+                ({formData.importance_level}점)
+              </span>
+            </div>
+            <p className="mt-1 text-xs text-gray-500">
+              해당 서브노트의 중요도를 1~5점으로 설정하세요
+            </p>
+          </div>
 
           {/* Category */}
           <div>
@@ -243,7 +328,7 @@ export default function TopicEditorPage() {
             </label>
             <Editor
               ref={editorRef}
-              initialValue={formData.content}
+              initialValue=""
               previewStyle="vertical"
               height="600px"
               initialEditType="wysiwyg"

@@ -92,4 +92,22 @@ export const usersApi = {
       throw new Error(error.detail || 'Failed to delete user')
     }
   },
+
+  updateRole: async (token: string, userId: string, role: 'student' | 'admin'): Promise<User> => {
+    const response = await fetch(`${API_URL}/api/users/${userId}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ role }),
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.detail || 'Failed to update user role')
+    }
+
+    return response.json()
+  },
 }

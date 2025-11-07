@@ -18,6 +18,7 @@ class UserCreate(UserBase):
 class UserUpdate(BaseModel):
     name: Optional[str] = None
     cohort: Optional[int] = None
+    role: Optional[str] = None  # 'student' or 'admin'
     approval_status: Optional[str] = None
 
 

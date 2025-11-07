@@ -16,3 +16,78 @@ body {
 #root {
   min-height: 100vh;
 }
+
+/* Custom Scrollbar Styles */
+/* For Webkit browsers (Chrome, Safari, Edge) */
+* ::-webkit-scrollbar,
+body ::-webkit-scrollbar,
+html ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+* ::-webkit-scrollbar-track,
+body ::-webkit-scrollbar-track,
+html ::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+* ::-webkit-scrollbar-thumb,
+body ::-webkit-scrollbar-thumb,
+html ::-webkit-scrollbar-thumb {
+  background: #818cf8;
+  border-radius: 10px;
+  transition: background 0.3s ease;
+}
+
+* ::-webkit-scrollbar-thumb:hover,
+body ::-webkit-scrollbar-thumb:hover,
+html ::-webkit-scrollbar-thumb:hover {
+  background: #6366f1;
+}
+
+/* Dark mode scrollbar */
+.dark * ::-webkit-scrollbar-track,
+.dark body ::-webkit-scrollbar-track,
+.dark html ::-webkit-scrollbar-track,
+[data-theme="dark"] * ::-webkit-scrollbar-track,
+[data-theme="dark"] body ::-webkit-scrollbar-track,
+[data-theme="dark"] html ::-webkit-scrollbar-track {
+  background: #111827 !important;
+}
+
+.dark * ::-webkit-scrollbar-thumb,
+.dark body ::-webkit-scrollbar-thumb,
+.dark html ::-webkit-scrollbar-thumb,
+[data-theme="dark"] * ::-webkit-scrollbar-thumb,
+[data-theme="dark"] body ::-webkit-scrollbar-thumb,
+[data-theme="dark"] html ::-webkit-scrollbar-thumb {
+  background: #6366f1 !important;
+}
+
+.dark * ::-webkit-scrollbar-thumb:hover,
+.dark body ::-webkit-scrollbar-thumb:hover,
+.dark html ::-webkit-scrollbar-thumb:hover,
+[data-theme="dark"] * ::-webkit-scrollbar-thumb:hover,
+[data-theme="dark"] body ::-webkit-scrollbar-thumb:hover,
+[data-theme="dark"] html ::-webkit-scrollbar-thumb:hover {
+  background: #818cf8 !important;
+}
+
+/* For Firefox */
+*,
+body,
+html {
+  scrollbar-width: thin;
+  scrollbar-color: #818cf8 #f1f1f1;
+}
+
+.dark *,
+.dark body,
+.dark html,
+[data-theme="dark"] *,
+[data-theme="dark"] body,
+[data-theme="dark"] html {
+  scrollbar-color: #6366f1 #111827 !important;
+}

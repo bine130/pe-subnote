@@ -286,6 +286,7 @@ export default function TemplatesPage() {
                     initialEditType="wysiwyg"
                     useCommandShortcut={true}
                     hideModeSwitch={false}
+                    usageStatistics={false}
                   />
                 </div>
               </div>

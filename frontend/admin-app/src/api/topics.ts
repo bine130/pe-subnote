@@ -4,11 +4,14 @@ export type Topic = {
   id: number
   title: string
   content: string
+  keywords?: string
+  mnemonic?: string
   category_id?: number
   created_by?: string
   is_published: boolean
   view_count: number
   order_index: number
+  importance_level: number
   created_at: string
 }
 
@@ -18,23 +21,30 @@ export type TopicListItem = {
   category_id?: number
   is_published: boolean
   view_count: number
+  importance_level: number
   created_at: string
 }
 
 export type TopicCreate = {
   title: string
   content: string
+  keywords?: string
+  mnemonic?: string
   category_id?: number
   is_published?: boolean
   order_index?: number
+  importance_level?: number
 }
 
 export type TopicUpdate = {
   title?: string
   content?: string
+  keywords?: string
+  mnemonic?: string
   category_id?: number
   is_published?: boolean
   order_index?: number
+  importance_level?: number
 }
 
 export const topicsApi = {

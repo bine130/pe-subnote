@@ -78,6 +78,21 @@ export default function UsersPage() {
     }
   }
 
+  const handleRoleChange = async (userId: string, currentRole: string) => {
+    if (!token) return
+    const newRole = currentRole === 'admin' ? 'student' : 'admin'
+    const roleLabel = newRole === 'admin' ? '관리자' : '수강생'
+
+    if (!confirm(`이 사용자를 ${roleLabel}로 변경하시겠습니까?`)) return
+
+    try {
+      await usersApi.updateRole(token, userId, newRole)
+      loadUsers()
+    } catch (err: any) {
+      setError(err.message)
+    }
+  }
+
   const displayUsers = filter === 'pending' ? pendingUsers : users
   const cohorts = Array.from(new Set(displayUsers.map(u => u.cohort))).sort()
 
@@ -99,6 +114,22 @@ export default function UsersPage() {
     return (
       <span className={`px-2 py-1 text-xs font-medium rounded-full ${styles[status as keyof typeof styles]}`}>
         {labels[status as keyof typeof labels]}
+      </span>
+    )
+  }
+
+  const getRoleBadge = (role: string) => {
+    const styles = {
+      admin: 'bg-purple-100 text-purple-800',
+      student: 'bg-blue-100 text-blue-800',
+    }
+    const labels = {
+      admin: '관리자',
+      student: '수강생',
+    }
+    return (
+      <span className={`px-2 py-1 text-xs font-medium rounded-full ${styles[role as keyof typeof styles]}`}>
+        {labels[role as keyof typeof labels]}
       </span>
     )
   }
@@ -203,6 +234,9 @@ export default function UsersPage() {
                     기수
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    권한
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     상태
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -224,6 +258,9 @@ export default function UsersPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{user.cohort}기</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {getRoleBadge(user.role)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {getStatusBadge(user.approval_status)}
@@ -248,12 +285,20 @@ export default function UsersPage() {
                           </button>
                         </div>
                       ) : (
-                        <button
-                          onClick={() => handleDelete(user.id)}
-                          className="px-3 py-1 text-red-600 hover:text-red-800"
-                        >
-                          삭제
-                        </button>
+                        <div className="flex justify-end gap-2">
+                          <button
+                            onClick={() => handleRoleChange(user.id, user.role)}
+                            className="px-3 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
+                          >
+                            {user.role === 'admin' ? '수강생으로' : '관리자로'}
+                          </button>
+                          <button
+                            onClick={() => handleDelete(user.id)}
+                            className="px-3 py-1 text-red-600 hover:text-red-800"
+                          >
+                            삭제
+                          </button>
+                        </div>
                       )}
                     </td>
                   </tr>
