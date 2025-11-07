@@ -5,6 +5,13 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str
 
+    @property
+    def database_url(self) -> str:
+        """DATABASE_URL을 asyncpg 형식으로 변환"""
+        if self.DATABASE_URL.startswith("postgresql://"):
+            return self.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return self.DATABASE_URL
+
     # Supabase (Optional)
     SUPABASE_URL: Optional[str] = None
     SUPABASE_KEY: Optional[str] = None
